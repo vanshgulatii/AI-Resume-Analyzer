@@ -4,6 +4,7 @@ from utils.preprocess import extract_skills
 from fastapi import FastAPI, UploadFile, File
 from fastapi import Form
 import pickle
+import os
 
 app = FastAPI()
 
