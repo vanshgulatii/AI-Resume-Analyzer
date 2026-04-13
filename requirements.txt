@@ -1,6 +1,7 @@
 fastapi
-uvicorn[standard]
+uvicorn
+pdfplumber
 scikit-learn
 pandas
-pdfplumber
-python-multipart
+sentence-transformers
+torch
