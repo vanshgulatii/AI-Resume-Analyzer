@@ -53,73 +53,100 @@ analyze = st.button("🚀 Analyze Resume")
 if analyze:
     if uploaded_file and job_description:
 
-        with st.spinner("Analyzing your resume..."):
+        try:
+            with st.spinner("Analyzing your resume..."):
 
-            response = requests.post(
-                "https://ai-resume-analyzer.onrender.com/analyze",
-                files={"file": (uploaded_file.name, uploaded_file.getvalue())},
-                data={"job_description": job_description}
-            )
+                response = requests.post(
+                    "https://ai-resume-analyzer.onrender.com/analyze",
+                    files={
+                        "file": (
+                            uploaded_file.name,
+                            uploaded_file.getvalue(),
+                            uploaded_file.type
+                        )
+                    },
+                    data={"job_description": job_description},
+                    timeout=60
+                )
 
-        if response.status_code == 200:
-            result = response.json()
+            # DEBUG INFO (you can remove later)
+            st.write("Status Code:", response.status_code)
 
-            st.write("---")
+            if response.status_code == 200:
+                result = response.json()
 
-            # ---------- SCORE ----------
-            score = result["match_score"]
+                st.write("---")
 
-            st.markdown("### 📊 Match Score")
-            st.progress(int(score))
-            st.success(f"{score}% Match")
+                # ---------- SCORE ----------
+                score = result["match_score"]
 
-            # ---------- SCORE BREAKDOWN ----------
-            st.write("---")
-            st.subheader("📈 Score Breakdown")
+                st.markdown("### 📊 Match Score")
+                st.progress(int(score))
+                st.success(f"{score}% Match")
 
-            col1, col2, col3 = st.columns(3)
+                # ---------- SCORE BREAKDOWN ----------
+                st.write("---")
+                st.subheader("📈 Score Breakdown")
 
-            with col1:
-                st.metric("Semantic", result["semantic_score"])
+                col1, col2, col3 = st.columns(3)
 
-            with col2:
-                st.metric("Skills", result["skills_score"])
+                with col1:
+                    st.metric("Semantic", result["semantic_score"])
 
-            with col3:
-                st.metric("Experience", result["experience_score"])
+                with col2:
+                    st.metric("Skills", result["skills_score"])
 
-            # ---------- DOMAIN ----------
-            st.info(f"Detected Domain: {result['domain']}")
+                with col3:
+                    st.metric("Experience", result["experience_score"])
 
-            # ---------- SKILLS ----------
-            st.write("---")
-            st.subheader("🧠 Skills Analysis")
+                # ---------- DOMAIN ----------
+                st.info(f"Detected Domain: {result['domain']}")
 
-            col1, col2 = st.columns(2)
+                # ---------- SKILLS ----------
+                st.write("---")
+                st.subheader("🧠 Skills Analysis")
 
-            with col1:
-                st.markdown("#### ✅ Matched Skills")
-                for skill in result["matched_skills"]:
-                    st.success(skill)
+                col1, col2 = st.columns(2)
 
-            with col2:
-                st.markdown("#### ❌ Missing Skills")
-                for skill in result["missing_skills"]:
-                    st.error(skill)
+                with col1:
+                    st.markdown("#### ✅ Matched Skills")
+                    if result["matched_skills"]:
+                        for skill in result["matched_skills"]:
+                            st.success(skill)
+                    else:
+                        st.write("No matched skills")
 
-            # ---------- RECOMMENDATIONS ----------
-            st.write("---")
-            st.subheader("💡 Recommendations")
+                with col2:
+                    st.markdown("#### ❌ Missing Skills")
+                    if result["missing_skills"]:
+                        for skill in result["missing_skills"]:
+                            st.error(skill)
+                    else:
+                        st.write("No missing skills")
 
-            if result["missing_skills"]:
-                st.warning("Add these skills to improve your resume:")
-                for skill in result["missing_skills"]:
-                    st.write(f"- {skill}")
+                # ---------- RECOMMENDATIONS ----------
+                st.write("---")
+                st.subheader("💡 Recommendations")
+
+                if result["missing_skills"]:
+                    st.warning("Add these skills to improve your resume:")
+                    for skill in result["missing_skills"]:
+                        st.write(f"- {skill}")
+                else:
+                    st.success("Excellent match! Your resume fits the job well.")
+
             else:
-                st.success("Excellent match! Your resume fits the job well.")
+                st.error("Backend error occurred")
+                st.write("Response:", response.text)
 
-        else:
-            st.error("Backend error. Please try again.")
+        except requests.exceptions.Timeout:
+            st.error("⏳ Server is waking up (Render free tier). Try again in 20 seconds.")
+
+        except requests.exceptions.ConnectionError:
+            st.error("🔌 Cannot connect to backend. Check if backend is live.")
+
+        except Exception as e:
+            st.error(f"Unexpected error: {str(e)}")
 
     else:
         st.warning("Please upload a resume and enter job description.")
