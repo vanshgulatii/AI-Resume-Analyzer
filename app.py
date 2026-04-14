@@ -6,6 +6,7 @@ from fastapi import FastAPI, UploadFile, File, Form
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.preprocess import extract_skills, detect_domain
+import os
 
 app = FastAPI()
 
@@ -65,3 +66,8 @@ async def analyze_resume(
         "missing_skills": missing_skills,
         "status": "success"
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
