@@ -2,12 +2,28 @@
 
 import streamlit as st
 import requests
+import time
 
 st.set_page_config(
     page_title="Vansh AI Resume Analyzer",
     page_icon="🚀",
     layout="wide"
 )
+
+# ---------- RETRY FUNCTION ----------
+def call_api_with_retry(url, files, data):
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                url,
+                files=files,
+                data=data,
+                timeout=60
+            )
+            return response
+        except requests.exceptions.RequestException:
+            time.sleep(5)
+    return None
 
 # ---------- CUSTOM CSS ----------
 st.markdown("""
@@ -53,24 +69,26 @@ analyze = st.button("🚀 Analyze Resume")
 if analyze:
     if uploaded_file and job_description:
 
-        try:
-            with st.spinner("Analyzing your resume..."):
+        with st.spinner("Analyzing your resume..."):
 
-                response = requests.post(
-                    "https://ai-resume-analyzer.onrender.com/analyze",
-                    files={
-                        "file": (
-                            uploaded_file.name,
-                            uploaded_file.getvalue(),
-                            uploaded_file.type
-                        )
-                    },
-                    data={"job_description": job_description},
-                    timeout=60
-                )
+            response = call_api_with_retry(
+                "https://ai-resume-analyzer.onrender.com/analyze",
+                files={
+                    "file": (
+                        uploaded_file.name,
+                        uploaded_file.getvalue(),
+                        uploaded_file.type
+                    )
+                },
+                data={"job_description": job_description}
+            )
 
-            # DEBUG INFO (you can remove later)
-            st.write("Status Code:", response.status_code)
+        # 🔴 If backend sleeping / failed
+        if response is None:
+            st.error("⏳ Backend is starting (Render sleep). Please try again in 10 seconds.")
+        
+        else:
+            st.write("Status Code:", response.status_code)  # Debug (remove later)
 
             if response.status_code == 200:
                 result = response.json()
@@ -138,15 +156,6 @@ if analyze:
             else:
                 st.error("Backend error occurred")
                 st.write("Response:", response.text)
-
-        except requests.exceptions.Timeout:
-            st.error("⏳ Server is waking up (Render free tier). Try again in 20 seconds.")
-
-        except requests.exceptions.ConnectionError:
-            st.error("🔌 Cannot connect to backend. Check if backend is live.")
-
-        except Exception as e:
-            st.error(f"Unexpected error: {str(e)}")
 
     else:
         st.warning("Please upload a resume and enter job description.")
