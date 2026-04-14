@@ -6,16 +6,11 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import pdfplumber
 from fastapi import FastAPI, UploadFile, File, Form
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from utils.preprocess import extract_skills, detect_domain
 
-# COMMENTED FOR DEBUG (we will re-enable later)
-# from sentence_transformers import SentenceTransformer
-# from sklearn.metrics.pairwise import cosine_similarity
-
 app = FastAPI()
-
-# Lazy model (disabled for now)
-bert_model = None
 
 
 @app.get("/")
@@ -23,10 +18,17 @@ def home():
     return {"message": "AI Resume Analyzer API is running"}
 
 
-# 🔥 Health check (VERY IMPORTANT for Render)
+# Health check (important for Render)
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# Experience scoring function
+def calculate_experience_score(text):
+    keywords = ["experience", "intern", "project", "developed", "worked", "managed"]
+    score = sum(text.lower().count(k) for k in keywords)
+    return min(score * 2, 20)
 
 
 @app.post("/analyze")
@@ -34,8 +36,6 @@ async def analyze_resume(
     file: UploadFile = File(...),
     job_description: str = Form(...)
 ):
-    global bert_model
-
     content = await file.read()
     text = ""
 
@@ -52,8 +52,13 @@ async def analyze_resume(
     else:
         return {"error": "Only PDF or TXT files allowed"}
 
-    # 🔥 TEMP: Replace BERT with dummy score (to fix deployment)
-    similarity_score = 50
+    # 🔥 TF-IDF Semantic Similarity (LIGHT + EFFECTIVE)
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform([text, job_description])
+
+    similarity_score = (
+        cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0] * 100
+    )
 
     # Skill extraction
     resume_skills = extract_skills(text)
@@ -66,13 +71,23 @@ async def analyze_resume(
 
     skills_score = min(len(matched_skills) * 5, 30)
 
-    final_score = similarity_score * 0.7 + skills_score * 0.3
+    # Experience score
+    experience_score = calculate_experience_score(text)
+
+    # Final score (balanced)
+    final_score = (
+        similarity_score * 0.6 +
+        skills_score * 0.25 +
+        experience_score * 0.15
+    )
+
     final_score = max(0, min(final_score, 100))
 
     return {
         "match_score": round(float(final_score), 2),
-        "semantic_score": similarity_score,
+        "semantic_score": round(float(similarity_score), 2),
         "skills_score": skills_score,
+        "experience_score": experience_score,
         "domain": domain,
         "resume_skills": resume_skills,
         "job_skills": job_skills,
