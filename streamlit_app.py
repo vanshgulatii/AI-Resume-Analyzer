@@ -73,7 +73,7 @@ if analyze:
         with st.spinner("🚀 AI is analyzing your resume... please wait"):
 
             response = call_api_with_retry(
-                ""https://ai-resume-analyzer-6ojk.onrender.com/analyze"",
+                "https://ai-resume-analyzer-6ojk.onrender.com/analyze",
                 files={
                     "file": (uploaded_file.name, uploaded_file.getvalue())
                 },
