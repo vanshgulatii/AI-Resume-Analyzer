@@ -1,130 +1,228 @@
-# 🚀 AI Resume Analyzer API
+# 🚀 AI Resume Analyzer
 
-An intelligent AI-powered API that analyzes resumes and matches them with job descriptions using Machine Learning.
+An AI-powered full-stack web application that analyzes resumes against job descriptions using NLP techniques.  
+It provides match scores, skill gap analysis, and improvement recommendations to help candidates optimize their resumes.
 
-🌍 Live Demo: https://ai-resume-analyzer-bdcq.onrender.com/docs
+---
+
+## 🌍 Live Demo
+
+Frontend (Streamlit): https://ai-resume-analyzer-vansh-gulati.streamlit.app/  
+Backend (FastAPI): https://ai-resume-analyzer-6ojk.onrender.com/docs  
 
 ---
 
 ## 🔥 Features
 
 - Upload Resume (PDF/TXT)
-- Extract Skills from Resume
-- Predict Resume Match Score using ML
-- Compare Resume with Job Description
-- Identify Missing Skills
-- Fast API built with FastAPI
+- AI-based Resume vs Job Description Matching
+- Match Score Calculation
+- Skill Gap Analysis (Matched vs Missing Skills)
+- Score Breakdown:
+  - Semantic Score
+  - Skills Score
+  - Experience Score
+- Resume Improvement Recommendations
+- Download Analysis Report
+- Lightweight and fast (optimized for deployment)
 
 ---
 
-## 🛠 Tech Stack
+## 🛠️ Tech Stack
 
-- Python
+### Backend
 - FastAPI
-- Scikit-learn
-- Pandas
-- pdfplumber
-- Uvicorn
+- Scikit-learn (TF-IDF + Cosine Similarity)
+- PDFPlumber
+
+### Frontend
+- Streamlit
+
+### Deployment
+- Render (Backend)
+- Streamlit Cloud (Frontend)
 
 ---
 
-## 🧠 How It Works
+## ⚙️ How It Works
 
-1. Upload resume (PDF/TXT)
-2. Extract text from file
-3. Detect skills using keyword matching
-4. Convert text using TF-IDF
-5. Predict score using ML model
-6. Compare with job description
-7. Identify missing skills
-
----
-
-## 📂 Project Structure
-
-ai-resume-analyzer/
-│
-├── app.py
-├── train_model.py
-├── requirements.txt
-├── runtime.txt
-│
-├── model/
-│   ├── model.pkl
-│   └── vectorizer.pkl
-│
-└── utils/
-    └── preprocess.py
+1. Upload a resume (PDF/TXT)
+2. Enter a job description
+3. System processes:
+   - Extracts text from resume
+   - Computes semantic similarity (TF-IDF)
+   - Extracts skills
+   - Calculates match score
+4. Displays:
+   - Match score
+   - Skills analysis
+   - Recommendations
 
 ---
 
-## ▶️ Run Locally
+## 📊 Scoring Logic
+
+Final Score is calculated as:
+
+- 60% Semantic Similarity
+- 25% Skills Match
+- 15% Experience Score
+
+---
+
+## 🚀 How to Run Locally
+
+### 1. Clone Repository
 
 git clone https://github.com/vanshgulatii/AI-Resume-Analyzer.git  
 cd AI-Resume-Analyzer  
 
-python3 -m venv venv  
+---
+
+### 2. Create Virtual Environment
+
+python -m venv venv  
 source venv/bin/activate  
+
+---
+
+### 3. Install Dependencies
 
 pip install -r requirements.txt  
 
-python -m uvicorn app:app --reload  
+---
 
-Open: http://127.0.0.1:8000/docs
+### 4. Run Backend
+
+uvicorn app:app --reload  
 
 ---
 
-## 📌 API Endpoint
+### 5. Run Frontend
 
-POST /analyze
-
-### Inputs:
-- Resume file (PDF/TXT)
-- Job description (text)
-
-### Output:
-- Match score
-- Resume skills
-- Job skills
-- Missing skills
+streamlit run streamlit_app.py  
 
 ---
 
-## 🧪 Example Response
+## 🌐 Deployment
 
-{
-  "match_score": 88.5,
-  "resume_skills": ["python", "pandas"],
-  "job_skills": ["python", "machine learning", "sql"],
-  "missing_skills": ["machine learning", "sql"],
-  "status": "success"
-}
+### Backend (Render)
+
+Start command:
+
+uvicorn app:app --host 0.0.0.0 --port $PORT  
 
 ---
 
-## 💼 Use Case
+### Frontend (Streamlit Cloud)
 
-- Helps job seekers improve resumes
-- Identifies skill gaps
-- Useful for ATS-like systems
-
----
-
-## 🚀 Future Improvements
-
-- Add frontend (React)
-- Improve ML model accuracy
-- Add advanced NLP features
-- Docker deployment
+- Connected GitHub repository  
+- Auto-deploy on push  
 
 ---
 
-## 👨‍💻 Author
+## ⚠️ Challenges Faced & Solutions
+
+### 1. Render Port Binding Issue
+
+Problem:  
+No open ports detected  
+
+Solution:  
+Used dynamic port:
+
+port = int(os.environ.get("PORT", 8000))
+
+---
+
+### 2. Heavy ML Model Crash
+
+Problem:  
+Sentence Transformers too heavy for free tier  
+
+Solution:  
+Replaced with TF-IDF (lightweight and fast)
+
+---
+
+### 3. Backend Sleep Issue (Render Free Tier)
+
+Problem:  
+Server sleeps → first request fails  
+
+Solution:  
+Added retry logic in frontend  
+
+Expected behavior:  
+First click may delay  
+Second click works  
+
+---
+
+### 4. 404 Not Found Error
+
+Problem:  
+Wrong backend URL used  
+
+Solution:  
+Used correct endpoint:
+
+https://ai-resume-analyzer-6ojk.onrender.com/analyze  
+
+---
+
+### 5. File Upload Issue
+
+Problem:  
+Incorrect file format in API request  
+
+Solution:
+
+files={"file": (uploaded_file.name, uploaded_file.getvalue())}
+
+---
+
+### 6. Missing Dependency
+
+Problem:  
+python-multipart not installed  
+
+Solution:
+
+pip install python-multipart  
+
+---
+
+## 🧠 Development Note
+
+This project was primarily developed from a **Machine Learning Engineer perspective**.
+
+- The core focus was on **NLP, scoring logic, and backend system design**
+- Frontend (Streamlit) was implemented with the help of:
+  - Guidance from peers
+  - Documentation and community resources
+  - LLM tools for faster UI iteration and debugging
+
+
+---
+
+##  Future Improvements
+
+- GPT-based resume suggestions  
+- Charts and visual analytics  
+- PDF report generation  
+- German language support  
+- Recruiter dashboard  
+
+---
+
+##  Author
 
 Vansh Gulati  
-GitHub: https://github.com/vanshgulatii  
-LinkedIn: https://www.linkedin.com/in/vansh-g-31a607197/
+AI | Machine Learning | Full-Stack Development  
 
 ---
 
-⭐ If you like this project, give it a star!
+## ⭐ If you like this project
+
+Give it a star on GitHub ⭐
