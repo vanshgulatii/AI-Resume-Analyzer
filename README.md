@@ -219,7 +219,7 @@ This project was primarily developed from a **Machine Learning Engineer perspect
 ##  Author
 
 Vansh Gulati  
-AI | Machine Learning | Full-Stack Development  
+AI | Machine Learning 
 
 ---
 
