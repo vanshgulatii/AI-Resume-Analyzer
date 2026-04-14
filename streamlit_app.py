@@ -25,6 +25,7 @@ def call_api_with_retry(url, files, data):
             time.sleep(5)
     return None
 
+
 # ---------- CUSTOM CSS ----------
 st.markdown("""
 <style>
@@ -69,27 +70,20 @@ analyze = st.button("🚀 Analyze Resume")
 if analyze:
     if uploaded_file and job_description:
 
-        with st.spinner("Analyzing your resume..."):
+        with st.spinner("🚀 AI is analyzing your resume... please wait"):
 
             response = call_api_with_retry(
                 "https://ai-resume-analyzer.onrender.com/analyze",
                 files={
-                    "file": (
-                        uploaded_file.name,
-                        uploaded_file.getvalue(),
-                        uploaded_file.type
-                    )
+                    "file": (uploaded_file.name, uploaded_file.getvalue())
                 },
                 data={"job_description": job_description}
             )
 
-        # 🔴 If backend sleeping / failed
         if response is None:
-            st.error("⏳ Backend is starting (Render sleep). Please try again in 10 seconds.")
-        
-        else:
-            st.write("Status Code:", response.status_code)  # Debug (remove later)
+            st.error("⏳ Backend is waking up. Please try again in 10 seconds.")
 
+        else:
             if response.status_code == 200:
                 result = response.json()
 
@@ -101,6 +95,14 @@ if analyze:
                 st.markdown("### 📊 Match Score")
                 st.progress(int(score))
                 st.success(f"{score}% Match")
+
+                # ---------- FEEDBACK ----------
+                if score > 80:
+                    st.success("🔥 Strong match! You are highly suitable for this role.")
+                elif score > 60:
+                    st.info("👍 Good match. Improve a few skills to increase chances.")
+                else:
+                    st.warning("⚠️ Low match. Consider improving missing skills.")
 
                 # ---------- SCORE BREAKDOWN ----------
                 st.write("---")
@@ -119,6 +121,18 @@ if analyze:
 
                 # ---------- DOMAIN ----------
                 st.info(f"Detected Domain: {result['domain']}")
+
+                # ---------- SKILL MATCH VISUAL ----------
+                st.write("---")
+                st.subheader("📊 Skill Match Overview")
+
+                total_skills = len(result["job_skills"])
+                matched = len(result["matched_skills"])
+
+                if total_skills > 0:
+                    match_percentage = int((matched / total_skills) * 100)
+                    st.progress(match_percentage)
+                    st.write(f"{match_percentage}% of required skills matched")
 
                 # ---------- SKILLS ----------
                 st.write("---")
@@ -153,8 +167,30 @@ if analyze:
                 else:
                     st.success("Excellent match! Your resume fits the job well.")
 
+                # ---------- DOWNLOAD REPORT ----------
+                report = f"""
+AI Resume Analysis Report
+
+Match Score: {result['match_score']}%
+Domain: {result['domain']}
+
+Matched Skills:
+{', '.join(result['matched_skills'])}
+
+Missing Skills:
+{', '.join(result['missing_skills'])}
+"""
+
+                st.download_button(
+                    label="📄 Download Report",
+                    data=report,
+                    file_name="resume_analysis.txt",
+                    mime="text/plain"
+                )
+
             else:
-                st.error("Backend error occurred")
+                st.error("❌ Backend error occurred")
+                st.write("Status Code:", response.status_code)
                 st.write("Response:", response.text)
 
     else:
