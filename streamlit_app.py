@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CUSTOM CSS
+# ---------- CUSTOM CSS ----------
 st.markdown("""
 <style>
 .main {
@@ -25,21 +25,15 @@ st.markdown("""
     color: #AAAAAA;
     margin-bottom: 30px;
 }
-.card {
-    padding: 20px;
-    border-radius: 12px;
-    background-color: #1E1E1E;
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.3);
-}
 </style>
 """, unsafe_allow_html=True)
 
-# HEADER
+# ---------- HEADER ----------
 st.markdown('<p class="big-title">AI Resume Analyzer</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Built by Vansh Gulati</p>', unsafe_allow_html=True)
 st.write("---")
 
-#  INPUT SECTION
+# ---------- INPUT SECTION ----------
 col1, col2 = st.columns(2)
 
 with col1:
@@ -52,17 +46,17 @@ with col2:
 
 st.write("")
 
-# BUTTON 
+# ---------- BUTTON ----------
 analyze = st.button("🚀 Analyze Resume")
 
-# LOGIC
+# ---------- LOGIC ----------
 if analyze:
     if uploaded_file and job_description:
 
         with st.spinner("Analyzing your resume..."):
 
             response = requests.post(
-                ""https://ai-resume-analyzer.onrender.com/analyze"",
+                "https://ai-resume-analyzer.onrender.com/analyze",
                 files={"file": (uploaded_file.name, uploaded_file.getvalue())},
                 data={"job_description": job_description}
             )
@@ -72,44 +66,65 @@ if analyze:
 
             st.write("---")
 
-            # SCORE
+            # ---------- SCORE ----------
             score = result["match_score"]
 
             st.markdown("### 📊 Match Score")
             st.progress(int(score))
             st.success(f"{score}% Match")
 
-            # DOMAIN 
+            # ---------- SCORE BREAKDOWN ----------
+            st.write("---")
+            st.subheader("📈 Score Breakdown")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("Semantic", result["semantic_score"])
+
+            with col2:
+                st.metric("Skills", result["skills_score"])
+
+            with col3:
+                st.metric("Experience", result["experience_score"])
+
+            # ---------- DOMAIN ----------
             st.info(f"Detected Domain: {result['domain']}")
 
-            # SKILLS 
-            st.markdown("### 🧠 Skills Analysis")
+            # ---------- SKILLS ----------
+            st.write("---")
+            st.subheader("🧠 Skills Analysis")
 
             col1, col2 = st.columns(2)
 
             with col1:
                 st.markdown("#### ✅ Matched Skills")
-                if result["matched_skills"]:
-                    for skill in result["matched_skills"]:
-                        st.markdown(f"- {skill}")
-                else:
-                    st.write("No matched skills found")
+                for skill in result["matched_skills"]:
+                    st.success(skill)
 
             with col2:
                 st.markdown("#### ❌ Missing Skills")
-                if result["missing_skills"]:
-                    for skill in result["missing_skills"]:
-                        st.markdown(f"- {skill}")
-                else:
-                    st.write("No missing skills")
+                for skill in result["missing_skills"]:
+                    st.error(skill)
+
+            # ---------- RECOMMENDATIONS ----------
+            st.write("---")
+            st.subheader("💡 Recommendations")
+
+            if result["missing_skills"]:
+                st.warning("Add these skills to improve your resume:")
+                for skill in result["missing_skills"]:
+                    st.write(f"- {skill}")
+            else:
+                st.success("Excellent match! Your resume fits the job well.")
 
         else:
-            st.error("Backend error. Please check if server is running.")
+            st.error("Backend error. Please try again.")
 
     else:
         st.warning("Please upload a resume and enter job description.")
 
-# FOOTER
+# ---------- FOOTER ----------
 st.write("---")
 st.markdown(
     "<p style='text-align:center; color:gray;'>Made with ❤️ by Vansh Gulati</p>",
