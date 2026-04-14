@@ -6,75 +6,112 @@ import requests
 st.set_page_config(
     page_title="Vansh AI Resume Analyzer",
     page_icon="🚀",
-    layout="centered"
+    layout="wide"
 )
+
+# CUSTOM CSS
+st.markdown("""
+<style>
+.main {
+    background-color: #0E1117;
+}
+.big-title {
+    text-align: center;
+    font-size: 48px;
+    font-weight: bold;
+}
+.subtitle {
+    text-align: center;
+    color: #AAAAAA;
+    margin-bottom: 30px;
+}
+.card {
+    padding: 20px;
+    border-radius: 12px;
+    background-color: #1E1E1E;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.3);
+}
+</style>
+""", unsafe_allow_html=True)
 
 # HEADER
-st.markdown(
-    """
-    <h1 style='text-align: center;'>AI Resume Analyzer</h1>
-    <h4 style='text-align: center;'>by Vansh Gulati</h4>
-    <hr>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown('<p class="big-title">AI Resume Analyzer</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Built by Vansh Gulati</p>', unsafe_allow_html=True)
+st.write("---")
 
-st.write("Upload your resume and compare it with a job description")
+#  INPUT SECTION
+col1, col2 = st.columns(2)
 
-# INPUT
-uploaded_file = st.file_uploader("Upload Resume (PDF/TXT)", type=["pdf", "txt"])
-job_description = st.text_area("Enter Job Description")
+with col1:
+    st.markdown("### 📄 Upload Resume")
+    uploaded_file = st.file_uploader("", type=["pdf", "txt"])
 
-# BUTTON
-if st.button("Analyze Resume"):
+with col2:
+    st.markdown("### 📝 Job Description")
+    job_description = st.text_area("", height=200)
+
+st.write("")
+
+# BUTTON 
+analyze = st.button("🚀 Analyze Resume")
+
+# LOGIC
+if analyze:
     if uploaded_file and job_description:
 
-        with st.spinner("Analyzing resume..."):
+        with st.spinner("Analyzing your resume..."):
 
             response = requests.post(
                 "http://127.0.0.1:8000/analyze",
-                files={
-                    "file": (uploaded_file.name, uploaded_file.getvalue())
-                },
+                files={"file": (uploaded_file.name, uploaded_file.getvalue())},
                 data={"job_description": job_description}
             )
 
         if response.status_code == 200:
             result = response.json()
 
-            # RESULTS 
-            st.success("Analysis Complete")
+            st.write("---")
 
-            # Score
-            st.metric("Match Score", f"{result['match_score']}%")
+            # SCORE
+            score = result["match_score"]
 
-            # Domain
-            st.write(f"**Detected Domain:** {result['domain']}")
+            st.markdown("### 📊 Match Score")
+            st.progress(int(score))
+            st.success(f"{score}% Match")
 
-            # Skills
-            st.subheader("Skills Analysis")
+            # DOMAIN 
+            st.info(f"Detected Domain: {result['domain']}")
+
+            # SKILLS 
+            st.markdown("### 🧠 Skills Analysis")
 
             col1, col2 = st.columns(2)
 
             with col1:
-                st.write("**Matched Skills**")
-                st.write(result["matched_skills"])
+                st.markdown("#### ✅ Matched Skills")
+                if result["matched_skills"]:
+                    for skill in result["matched_skills"]:
+                        st.markdown(f"- {skill}")
+                else:
+                    st.write("No matched skills found")
 
             with col2:
-                st.write("**Missing Skills**")
-                st.write(result["missing_skills"])
+                st.markdown("#### ❌ Missing Skills")
+                if result["missing_skills"]:
+                    for skill in result["missing_skills"]:
+                        st.markdown(f"- {skill}")
+                else:
+                    st.write("No missing skills")
 
         else:
-            st.error("Error analyzing resume")
+            st.error("Backend error. Please check if server is running.")
 
     else:
-        st.warning("Please upload a resume and enter job description")
+        st.warning("Please upload a resume and enter job description.")
 
-# FOOTER 
+# FOOTER
+st.write("---")
 st.markdown(
-    """
-    <hr>
-    <p style='text-align: center;'>Built by Vansh Gulati | AI & Machine Learning</p>
-    """,
+    "<p style='text-align:center; color:gray;'>Made with ❤️ by Vansh Gulati</p>",
     unsafe_allow_html=True
 )
