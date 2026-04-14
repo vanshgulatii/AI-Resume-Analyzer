@@ -4,3 +4,4 @@ pdfplumber
 scikit-learn
 pandas
 python-multipart
+requests

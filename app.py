@@ -2,6 +2,7 @@
 
 import io
 import os
+import requests
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import pdfplumber
@@ -12,19 +13,57 @@ from utils.preprocess import extract_skills, detect_domain
 
 app = FastAPI()
 
+# 🔐 Get API key from environment (IMPORTANT)
+HF_API_KEY = os.getenv("HF_API_KEY")
+
 
 @app.get("/")
 def home():
     return {"message": "AI Resume Analyzer API is running"}
 
 
-# Health check (important for Render)
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
-# Experience scoring function
+# 🔥 HuggingFace API similarity
+def get_similarity_score_api(text, job_description):
+    if not HF_API_KEY:
+        return None
+
+    API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
+
+    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+
+    payload = {
+        "inputs": {
+            "source_sentence": text[:1000],
+            "sentences": [job_description[:1000]]
+        }
+    }
+
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=10)
+
+        if response.status_code == 200:
+            return response.json()[0] * 100
+        else:
+            return None
+
+    except Exception:
+        return None
+
+
+# 🔥 TF-IDF fallback (always works)
+def get_similarity_score_tfidf(text, job_description):
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform([text, job_description])
+
+    return cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0] * 100
+
+
+# Experience scoring
 def calculate_experience_score(text):
     keywords = ["experience", "intern", "project", "developed", "worked", "managed"]
     score = sum(text.lower().count(k) for k in keywords)
@@ -45,22 +84,19 @@ async def analyze_resume(
             for page in pdf.pages:
                 text += page.extract_text() or ""
 
-    # TXT handling
     elif file.filename.endswith(".txt"):
         text = content.decode("utf-8")
 
     else:
         return {"error": "Only PDF or TXT files allowed"}
 
-    # 🔥 TF-IDF Semantic Similarity (LIGHT + EFFECTIVE)
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform([text, job_description])
+    # 🔥 Try API first, fallback to TF-IDF
+    similarity_score = get_similarity_score_api(text, job_description)
 
-    similarity_score = (
-        cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0] * 100
-    )
+    if similarity_score is None:
+        similarity_score = get_similarity_score_tfidf(text, job_description)
 
-    # Skill extraction
+    # Skills
     resume_skills = extract_skills(text)
     job_skills = extract_skills(job_description)
 
@@ -71,10 +107,10 @@ async def analyze_resume(
 
     skills_score = min(len(matched_skills) * 5, 30)
 
-    # Experience score
+    # Experience
     experience_score = calculate_experience_score(text)
 
-    # Final score (balanced)
+    # Final score
     final_score = (
         similarity_score * 0.6 +
         skills_score * 0.25 +
