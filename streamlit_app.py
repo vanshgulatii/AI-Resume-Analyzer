@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ---------------- HEADER ----------------
+# HEADER
 st.markdown(
     """
     <h1 style='text-align: center;'>AI Resume Analyzer</h1>
@@ -21,11 +21,11 @@ st.markdown(
 
 st.write("Upload your resume and compare it with a job description")
 
-# ---------------- INPUT ----------------
+# INPUT
 uploaded_file = st.file_uploader("Upload Resume (PDF/TXT)", type=["pdf", "txt"])
 job_description = st.text_area("Enter Job Description")
 
-# ---------------- BUTTON ----------------
+# BUTTON
 if st.button("Analyze Resume"):
     if uploaded_file and job_description:
 
@@ -42,7 +42,7 @@ if st.button("Analyze Resume"):
         if response.status_code == 200:
             result = response.json()
 
-            # ---------------- RESULTS ----------------
+            # RESULTS 
             st.success("Analysis Complete")
 
             # Score
@@ -70,7 +70,7 @@ if st.button("Analyze Resume"):
     else:
         st.warning("Please upload a resume and enter job description")
 
-# ---------------- FOOTER ----------------
+# FOOTER 
 st.markdown(
     """
     <hr>
