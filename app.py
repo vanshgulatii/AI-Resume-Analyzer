@@ -2,15 +2,19 @@
 
 import io
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import pdfplumber
 from fastapi import FastAPI, UploadFile, File, Form
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from utils.preprocess import extract_skills, detect_domain
+
+# COMMENTED FOR DEBUG (we will re-enable later)
+# from sentence_transformers import SentenceTransformer
+# from sklearn.metrics.pairwise import cosine_similarity
 
 app = FastAPI()
 
-# Lazy loading model to save resources on startup
+# Lazy model (disabled for now)
 bert_model = None
 
 
@@ -19,16 +23,18 @@ def home():
     return {"message": "AI Resume Analyzer API is running"}
 
 
+# 🔥 Health check (VERY IMPORTANT for Render)
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/analyze")
 async def analyze_resume(
     file: UploadFile = File(...),
     job_description: str = Form(...)
 ):
     global bert_model
-
-    # Load model only when needed 
-    if bert_model is None:
-        bert_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     content = await file.read()
     text = ""
@@ -46,11 +52,8 @@ async def analyze_resume(
     else:
         return {"error": "Only PDF or TXT files allowed"}
 
-    # Semantic similarity
-    resume_embedding = bert_model.encode([text])
-    jd_embedding = bert_model.encode([job_description])
-
-    similarity_score = cosine_similarity(resume_embedding, jd_embedding)[0][0] * 100
+    # 🔥 TEMP: Replace BERT with dummy score (to fix deployment)
+    similarity_score = 50
 
     # Skill extraction
     resume_skills = extract_skills(text)
@@ -63,13 +66,12 @@ async def analyze_resume(
 
     skills_score = min(len(matched_skills) * 5, 30)
 
-    # Final score
     final_score = similarity_score * 0.7 + skills_score * 0.3
     final_score = max(0, min(final_score, 100))
 
     return {
         "match_score": round(float(final_score), 2),
-        "semantic_score": round(float(similarity_score), 2),
+        "semantic_score": similarity_score,
         "skills_score": skills_score,
         "domain": domain,
         "resume_skills": resume_skills,
