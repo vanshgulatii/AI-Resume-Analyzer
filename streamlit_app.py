@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------- RETRY FUNCTION ----------
+# RETRY FUNCTION
 def call_api_with_retry(url, files, data):
     for attempt in range(3):
         try:
@@ -26,7 +26,7 @@ def call_api_with_retry(url, files, data):
     return None
 
 
-# ---------- CUSTOM CSS ----------
+# CUSTOM CSS 
 st.markdown("""
 <style>
 .main {
@@ -45,12 +45,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- HEADER ----------
+#  HEADER 
 st.markdown('<p class="big-title">AI Resume Analyzer</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Built by Vansh Gulati</p>', unsafe_allow_html=True)
 st.write("---")
 
-# ---------- INPUT SECTION ----------
+# INPUT SECTION 
 col1, col2 = st.columns(2)
 
 with col1:
@@ -63,10 +63,10 @@ with col2:
 
 st.write("")
 
-# ---------- BUTTON ----------
+# BUTTON 
 analyze = st.button("🚀 Analyze Resume")
 
-# ---------- LOGIC ----------
+#  LOGIC 
 if analyze:
     if uploaded_file and job_description:
 
@@ -89,14 +89,14 @@ if analyze:
 
                 st.write("---")
 
-                # ---------- SCORE ----------
+                # SCORE 
                 score = result["match_score"]
 
                 st.markdown("### 📊 Match Score")
                 st.progress(int(score))
                 st.success(f"{score}% Match")
 
-                # ---------- FEEDBACK ----------
+                # FEEDBACK
                 if score > 80:
                     st.success("🔥 Strong match! You are highly suitable for this role.")
                 elif score > 60:
@@ -104,7 +104,7 @@ if analyze:
                 else:
                     st.warning("⚠️ Low match. Consider improving missing skills.")
 
-                # ---------- SCORE BREAKDOWN ----------
+                # SCORE BREAKDOWN
                 st.write("---")
                 st.subheader("📈 Score Breakdown")
 
@@ -119,10 +119,10 @@ if analyze:
                 with col3:
                     st.metric("Experience", result["experience_score"])
 
-                # ---------- DOMAIN ----------
+                #  DOMAIN 
                 st.info(f"Detected Domain: {result['domain']}")
 
-                # ---------- SKILL MATCH VISUAL ----------
+                #  SKILL MATCH VISUAL
                 st.write("---")
                 st.subheader("📊 Skill Match Overview")
 
@@ -134,7 +134,7 @@ if analyze:
                     st.progress(match_percentage)
                     st.write(f"{match_percentage}% of required skills matched")
 
-                # ---------- SKILLS ----------
+                #  SKILLS 
                 st.write("---")
                 st.subheader("🧠 Skills Analysis")
 
@@ -156,7 +156,7 @@ if analyze:
                     else:
                         st.write("No missing skills")
 
-                # ---------- RECOMMENDATIONS ----------
+                # RECOMMENDATIONS 
                 st.write("---")
                 st.subheader("💡 Recommendations")
 
@@ -167,7 +167,7 @@ if analyze:
                 else:
                     st.success("Excellent match! Your resume fits the job well.")
 
-                # ---------- DOWNLOAD REPORT ----------
+                # DOWNLOAD REPORT 
                 report = f"""
 AI Resume Analysis Report
 
@@ -196,7 +196,7 @@ Missing Skills:
     else:
         st.warning("Please upload a resume and enter job description.")
 
-# ---------- FOOTER ----------
+# FOOTER
 st.write("---")
 st.markdown(
     "<p style='text-align:center; color:gray;'>Made with ❤️ by Vansh Gulati</p>",
