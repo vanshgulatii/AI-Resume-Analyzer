@@ -1,16 +1,17 @@
 # Author: Vansh Gulati
 
 import io
+import os
 import pdfplumber
 from fastapi import FastAPI, UploadFile, File, Form
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.preprocess import extract_skills, detect_domain
-import os
 
 app = FastAPI()
 
-bert_model = SentenceTransformer("all-MiniLM-L6-v2")
+# Lazy loading model to save resources on startup
+bert_model = None
 
 
 @app.get("/")
@@ -23,25 +24,35 @@ async def analyze_resume(
     file: UploadFile = File(...),
     job_description: str = Form(...)
 ):
+    global bert_model
+
+    # Load model only when needed 
+    if bert_model is None:
+        bert_model = SentenceTransformer("all-MiniLM-L6-v2")
+
     content = await file.read()
     text = ""
 
+    # PDF handling
     if file.filename.endswith(".pdf"):
         with pdfplumber.open(io.BytesIO(content)) as pdf:
             for page in pdf.pages:
                 text += page.extract_text() or ""
 
+    # TXT handling
     elif file.filename.endswith(".txt"):
         text = content.decode("utf-8")
 
     else:
         return {"error": "Only PDF or TXT files allowed"}
 
+    # Semantic similarity
     resume_embedding = bert_model.encode([text])
     jd_embedding = bert_model.encode([job_description])
 
     similarity_score = cosine_similarity(resume_embedding, jd_embedding)[0][0] * 100
 
+    # Skill extraction
     resume_skills = extract_skills(text)
     job_skills = extract_skills(job_description)
 
@@ -52,6 +63,7 @@ async def analyze_resume(
 
     skills_score = min(len(matched_skills) * 5, 30)
 
+    # Final score
     final_score = similarity_score * 0.7 + skills_score * 0.3
     final_score = max(0, min(final_score, 100))
 
@@ -67,6 +79,8 @@ async def analyze_resume(
         "status": "success"
     }
 
+
+# Render-compatible startup
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
