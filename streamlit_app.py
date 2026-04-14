@@ -62,7 +62,7 @@ if analyze:
         with st.spinner("Analyzing your resume..."):
 
             response = requests.post(
-                "http://127.0.0.1:8000/analyze",
+                ""https://ai-resume-analyzer.onrender.com/analyze"",
                 files={"file": (uploaded_file.name, uploaded_file.getvalue())},
                 data={"job_description": job_description}
             )
